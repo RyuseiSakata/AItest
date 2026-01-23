@@ -1,4 +1,4 @@
-import { AbsoluteFill, Img, interpolate, Sequence, useCurrentFrame, useVideoConfig, staticFile } from 'remotion';
+import { AbsoluteFill, Img, interpolate, Sequence, useCurrentFrame, useVideoConfig, staticFile, Audio } from 'remotion';
 import { dialogueData } from './data/news-data';
 import { FONT_FAMILY } from './constants';
 
@@ -6,25 +6,20 @@ const SoloScene: React.FC<{
     character: string;
     text: string;
     bg: string;
-    prevBg?: string;
-}> = ({ character, text, bg, prevBg }) => {
+    audioSrc: string;
+}> = ({ character, text, bg, audioSrc }) => {
     const frame = useCurrentFrame();
-    const { fps } = useVideoConfig();
-
-    // Smooth transition for background
-    // Note: In this simple sequence setup, we only render the current bg. 
-    // For smoother transitions between scenes, we rely on the sequence cut itself.
 
     // Character Entry Animation
-    // Fade in and slight slide up
     const charOpacity = interpolate(frame, [0, 10], [0, 1]);
     const charTranslateY = interpolate(frame, [0, 15], [50, 0], { extrapolateRight: 'clamp' });
 
-    // Character Image
     const charImg = character === 'Ai' ? staticFile('char_ai.png') : staticFile('char_mai.png');
 
     return (
         <AbsoluteFill>
+            <Audio src={audioSrc} />
+
             {/* Background */}
             <Img
                 src={bg}
@@ -32,20 +27,20 @@ const SoloScene: React.FC<{
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
-                    filter: 'blur(3px)', // Slight blur to focus on character
+                    filter: 'blur(3px)',
                 }}
             />
 
-            {/* Character (Centered/Solo) */}
+            {/* Character */}
             <AbsoluteFill style={{ justifyContent: 'flex-end', alignItems: 'center' }}>
                 <Img
                     src={charImg}
                     style={{
-                        height: '90%', // Large portrait
+                        height: '90%',
                         width: 'auto',
                         opacity: charOpacity,
                         transform: `translateY(${charTranslateY}px)`,
-                        marginBottom: -50 // Anchor to bottom
+                        marginBottom: -50
                     }}
                 />
             </AbsoluteFill>
@@ -57,7 +52,7 @@ const SoloScene: React.FC<{
                 left: '5%',
                 right: '5%',
                 minHeight: 250,
-                backgroundColor: 'rgba(255, 255, 255, 0.95)', // White box for cleaner look against blur
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
                 borderRadius: 20,
                 boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
                 padding: 40,
@@ -101,24 +96,26 @@ const SoloScene: React.FC<{
 };
 
 export const NewsVideo: React.FC = () => {
-    const { fps } = useVideoConfig(); // Fixed duration logic assumed in Root
-    // We reuse the data logic. ideally we pass duration as prop or calc here.
-    const DURATION_PER_LINE = 6 * 30;
+    const { fps } = useVideoConfig();
+    const DURATION_PER_LINE = 6 * 30; // 6 seconds assumed for audio safety margin usually
 
     return (
         <AbsoluteFill style={{ backgroundColor: '#000' }}>
+            <Audio src={staticFile('audio/bgm.mp3')} volume={0.1} loop />
+
             {dialogueData.map((item, index) => {
                 const startFrame = index * DURATION_PER_LINE;
-
-                // Fallback bg logic: use current item's or previous known non-null logic (simplified here)
                 const bg = item.background || staticFile('agentic_ai.png');
+                const audioSrc = staticFile(`audio/${item.id}.wav`);
 
                 return (
                     <Sequence key={item.id} from={startFrame} durationInFrames={DURATION_PER_LINE}>
+                        <Audio src={staticFile('audio/pop.mp3')} volume={0.5} />
                         <SoloScene
                             character={item.character}
                             text={item.text}
                             bg={bg}
+                            audioSrc={audioSrc}
                         />
                     </Sequence>
                 );

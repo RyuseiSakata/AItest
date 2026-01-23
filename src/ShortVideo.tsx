@@ -1,8 +1,13 @@
-import { AbsoluteFill, Img, interpolate, Sequence, useCurrentFrame, useVideoConfig, staticFile } from 'remotion';
+import { AbsoluteFill, Img, interpolate, Sequence, useCurrentFrame, useVideoConfig, staticFile, Audio } from 'remotion';
 import { dialogueData } from './data/news-data';
 import { FONT_FAMILY } from './constants';
 
-const ShortSoloScene: React.FC<{ character: string; text: string; bg: string }> = ({ character, text, bg }) => {
+const ShortSoloScene: React.FC<{
+    character: string;
+    text: string;
+    bg: string;
+    audioSrc: string;
+}> = ({ character, text, bg, audioSrc }) => {
     const frame = useCurrentFrame();
 
     const scale = interpolate(frame, [0, 100], [1, 1.1]);
@@ -12,6 +17,8 @@ const ShortSoloScene: React.FC<{ character: string; text: string; bg: string }> 
 
     return (
         <AbsoluteFill>
+            <Audio src={audioSrc} />
+
             {/* Background */}
             <Img src={bg} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: `scale(${scale})` }} />
             <AbsoluteFill style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} />
@@ -23,17 +30,16 @@ const ShortSoloScene: React.FC<{ character: string; text: string; bg: string }> 
                     style={{
                         width: '120%',
                         height: 'auto',
-                        marginBottom: -100, // Close up
+                        marginBottom: -100,
                         transform: `translateY(${charTranslateY}px)`,
                     }}
                 />
             </AbsoluteFill>
 
-            {/* Text Bubble - Top or Middle to not cover face? Or bottom overlay? 
-               For shorts, usually center or top is good, but let's stick to bottom overlay for readability */}
+            {/* Text Bubble */}
             <div style={{
                 position: 'absolute',
-                top: 200, // Top placement for Shorts often works better to avoid UI
+                top: 200,
                 left: 40,
                 right: 40,
             }}>
@@ -72,19 +78,25 @@ const ShortSoloScene: React.FC<{ character: string; text: string; bg: string }> 
 };
 
 export const ShortVideo: React.FC = () => {
-    const { fps } = useVideoConfig(); // 30fps
-    const SLIDE_DURATION_FRAMES = 5 * fps;
+    const { fps } = useVideoConfig();
+    const SLIDE_DURATION_FRAMES = 5 * fps; // 5 seconds. Audio might be longer? Risk of cut off.
 
     return (
         <AbsoluteFill style={{ backgroundColor: 'black' }}>
+            <Audio src={staticFile('audio/bgm.mp3')} volume={0.1} loop />
+
             {dialogueData.map((item, index) => {
                 const bg = item.background || staticFile('agentic_ai.png');
+                const audioSrc = staticFile(`audio/${item.id}.wav`);
+
                 return (
                     <Sequence key={item.id} from={index * SLIDE_DURATION_FRAMES} durationInFrames={SLIDE_DURATION_FRAMES}>
+                        <Audio src={staticFile('audio/pop.mp3')} volume={0.5} />
                         <ShortSoloScene
                             character={item.character}
                             text={item.text}
                             bg={bg}
+                            audioSrc={audioSrc}
                         />
                     </Sequence>
                 );
