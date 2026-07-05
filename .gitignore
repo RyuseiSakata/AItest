@@ -6,3 +6,6 @@ dist
 # Ignore the output video from Git but not videos you import into src/.
 out
 build
+
+# Claude Code local settings (machine-specific permissions)
+.claude/settings.local.json
